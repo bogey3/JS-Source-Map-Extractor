@@ -14,21 +14,28 @@ def retrieveSourceMap(fileOrURL):
     if os.path.isfile(sys.argv[1]):
         with open(fileOrURL, "rb") as f:
             data = f.read().decode("utf8")
+            size = len(data)
             sourceMap = json.loads(data)
-        print("Retrieved source map from file", end="")
+        print("Retrieved source map from file")
     elif fileOrURL.startswith("http"):
-        sourceMap = json.loads(requests.get(sys.argv[1]).text)
-        print("Retrieved source map from url", end="")
-    print(f"({str(size)} bytes)")
+        data = requests.get(sys.argv[1]).text
+        size = len(data)
+        print("Retrieved source map from url")
+        sourceMap = json.loads(data)
+    print(f"Parsed JSON ({str(size)} bytes)")
     return sourceMap
 
 def extractFiles(sourceMap):
     characterReplaceRegex = re.compile(r"[<>:\"\/\|?*]")
     fileCount = len(sourceMap["sources"])
+    maxStatus = 0
     for index, file in enumerate(sourceMap["sources"]):
         newFilePath = f".{os.sep}{os.sep.join(file.split('/'))}"
         newFilePath = characterReplaceRegex.sub("", newFilePath)
-        print(f"\r{str(index + 1)}/{str(fileCount)}\t{file.split('/')[:-1]}", end="")
+        status = f"\r{str(index + 1)}/{str(fileCount)}\t{newFilePath}"
+        if len(status)>maxStatus:
+            maxStatus = len(status)
+        print(status + " "*(maxStatus - len(status)), end="")
 
         if not os.path.exists(newFilePath):
             if "/" in file:
@@ -49,7 +56,7 @@ def buildFolderStructure(sourceMap):
     currentDir = sourceMap["file"].split("/")[:-1]
     for i in range(len(currentDir), top):
         currentDir = ["Unknown Folder"] + currentDir
-    currentDir = ["Top Directory"] + currentDir
+    currentDir = [sourceMap["file"].split("/")[-1]] + currentDir
     dirString = f".{os.sep}{os.sep.join(currentDir)}"
     os.makedirs(dirString, exist_ok=True)
     os.chdir(dirString)
