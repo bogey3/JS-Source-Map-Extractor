@@ -26,8 +26,6 @@ def extractFiles(sourceMap):
     characterReplaceRegex = re.compile(r"[<>:\"\/\|?*]")
     fileCount = len(sourceMap["sources"])
     for index, file in enumerate(sourceMap["sources"]):
-        if file.count("../") > 2:
-            pass
         newFilePath = f".{os.sep}{os.sep.join(file.split('/'))}"
         newFilePath = characterReplaceRegex.sub("", newFilePath)
         print(f"\r{str(index + 1)}/{str(fileCount)}\t{file.split('/')[:-1]}", end="")
